@@ -1,0 +1,4 @@
+PROGRAM rullo;
+
+BEGIN
+END.
