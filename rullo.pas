@@ -1,5 +1,6 @@
 PROGRAM rullo;
 PROCEDURE Dimension;
+//es una función que mostrará por pantalla las dimensiones diponibles para este juego
 BEGIN
   WRITELN('a. 5x5');
   WRITELN('b. 6x6');
@@ -13,6 +14,7 @@ BEGIN
 END;
 
 PROCEDURE Ayuda;
+//la ayuda no está completamente finalizada porque habrá que indicarle al usuario que opción pulsar para interrumpir una partida 
 BEGIN
   WRITELN('El juego consiste en que la suma de los numeros de cada fila o columna  debe ser igual al numero de la caja');
   WRITELN('usted debe clickar sobre un numero para excluirlo de la suma');
@@ -20,6 +22,8 @@ BEGIN
 END;
 
 PROCEDURE Tabla(VAR opcionDimension,opcionRango:char);
+//en esta función se seleccionará el tamaño de la tabla del juego y el rango 1-9 o 1-19, además hee puesto un repeat hasta que seleccione una opción válida en cada caso,
+//por otra parte, en principio, he puesto estos parámetros de salida para usarlos en una nueva funciónn que llamaré IniciarTabla; pero no es definitivo, tengo que probarlo
 BEGIN
 
   REPEAT
