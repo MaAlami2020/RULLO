@@ -22,7 +22,7 @@ BEGIN
 END;
 
 PROCEDURE Tabla(VAR opcionDimension,opcionRango:char);
-//en esta función se seleccionará el tamaño de la tabla del juego y el rango 1-9 o 1-19, además hee puesto un repeat hasta que seleccione una opción válida en cada caso,
+//en esta función se seleccionará el tamaño de la tabla del juego, esto se repetirá hasta que seleccione una opción válid; cuando la opción ya sea válida se seleccionará el rango 1-9 o 1-19 y al igual que antes se repetirá hasta que haya hecho la selección correcta
 //por otra parte, en principio, he puesto estos parámetros de salida para usarlos en una nueva funciónn que llamaré IniciarTabla; pero no es definitivo, tengo que probarlo
 BEGIN
 
@@ -47,6 +47,7 @@ BEGIN
 END;
 
 PROCEDURE Menu;
+//con esta función se muestra por pantalla las opciones disponibles antes de jugar, aparecerá nada más entrar en la app
 BEGIN
   WRITELN('1.Obtener ayuda');
   WRITELN('2.Seleccionar la dimension');
@@ -54,6 +55,7 @@ BEGIN
 END;
 
 PROCEDURE JuegoDelRullo;
+//el usuario seleccionará una de las tres opciones del menu, esto se repetirá tantas veces hasta que el usuario seleccione una opción del menú, después será un case
 VAR
   opcionMenu:integer;
 BEGIN
@@ -80,5 +82,6 @@ END;
 
 BEGIN
   RANDOMIZE;
+  JuegoDelRullo;
 READLN;
 END. 
