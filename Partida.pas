@@ -14,7 +14,20 @@ PROGRAM Partida;
       UNTIL(c='a') or (c='b') or (c='c') or (c='d') or (c='e') or (c='f');
       ElegirPartida:= UPCASE(c);
     END;
-
+  {Muestra el menu}
+  FUNCTION Menu:char;
+    BEGIN
+      WRITELN(' MENU ');
+      WRITELN('1.Obtener ayuda');
+      WRITELN('2.Seleccionar la dimension');
+      WRITELN('3.Leer ranking');
+      WRITELN('4.Salir');
+      REPEAT
+        Menu:= readkey;
+      UNTIL(Menu>=chr(48)) and (Menu<=chr(52));
+      CLRSCR;
+    END;
+    
 BEGIN
   WRITELN(ElegirPartida);
   READLN;
