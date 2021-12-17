@@ -12,7 +12,7 @@ PROGRAM Partida;
         WRITE('Escriba el tipo de partida que quiere jugar ');c:= readkey;
         CLRSCR;
       UNTIL(c='a') or (c='b') or (c='c') or (c='d') or (c='e') or (c='f');
-      ElegirPartida:= c;
+      ElegirPartida:= UPCASE(c);
     END;
 
 BEGIN
