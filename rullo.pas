@@ -1,6 +1,5 @@
 program Rullo;
-USES
-   CRT;
+
 CONST
   MIN=1;
   MAX=300;
@@ -78,47 +77,64 @@ BEGIN
 
 end;
 
-FUNCTION VerificarFilaNula(tablaF:TTabla;numFila,dim:integer):boolean;
+FUNCTION VerificarSumatorioEsperadoNoNulo(tablaF,tablaC:TTabla;dim:integer):boolean;
 VAR
-  cont,j:integer;
-  aux:boolean;
+  i,j:integer;
+  filaNula,columnaNula:boolean;
 BEGIN
 
-  cont:=0;
-   FOR j:=MIN  TO dim DO BEGIN
-       IF(tablaF[numFila,j].activado=FALSE)THEN
-          cont:=cont+1;
-   end;
-   IF(cont=dim)THEN
-      aux:=TRUE
-   ELSE IF(cont<dim)THEN
-       aux:=FALSE;
+   i:=MIN;j:=MIN;
+   REPEAT
+      IF(tablaF[i,MIN].sumable<>0)THEN BEGIN
+          i:=i+1;
+          filaNula:=FALSE;
+      end
+      ELSE IF(tablaF[i,MIN].sumable=0)THEN
+          filaNula:=TRUE;
+   until(i=succ(dim))OR(filaNula=TRUE);
 
-   VerificarFilaNula:=aux;
+    REPEAT
+      IF(tablaC[MIN,j].sumable<>0)THEN BEGIN
+          j:=j+1;
+          columnaNula:=FALSE;
+      end
+      ELSE IF(tablaC[MIN,j].sumable=0)THEN
+          columnaNula:=TRUE;
+   until(i=succ(dim))OR(columnaNula=TRUE);
+
+   VerificarSumatorioEsperadoNoNulo:=(NOT filaNula)AND(NOT columnaNula);
 
 end;
 
-FUNCTION VerificarColumnaNula(tablaC:TTabla;numColumna,dim:integer):boolean;
+PROCEDURE ActualizarFila(VAR tablaF_Bis:TTabla;fila,dim:integer);
 VAR
-  cont,i:integer;
-  aux:boolean;
+  j,aux,suma:integer;
 BEGIN
 
-  cont:=0;
-   FOR i:=MIN  TO dim DO BEGIN
-       IF(tablaC[i,numColumna].activado=FALSE)THEN
-          cont:=cont+1;
-   end;
-   IF(cont=dim)THEN
-      aux:=TRUE
-   ELSE IF(cont<dim)THEN
-       aux:=FALSE;
-
-   VerificarColumnaNula:=aux;
+  suma:=0;
+  FOR j:=MIN TO dim DO BEGIN
+    aux:=tablaF_Bis[fila,j].visible;
+    suma:=suma+aux;
+  end;
+  ActualizarSumatorioFila(tablaF_Bis,fila,suma,dim);
 
 end;
 
-PROCEDURE InicializarTablaResultado(VAR tablaF:TTabla;VAR tablaC:TTabla;VAR dim:integer;rango,posDesactivables:integer);
+PROCEDURE ActualizarColumna(VAR tablaC_Bis:TTabla;columna,dim:integer);
+VAR
+  i,aux,suma:integer;
+BEGIN
+
+  suma:=0;
+  FOR i:=MIN TO dim DO BEGIN
+    aux:=tablaC_Bis[i,columna].visible;
+    suma:=suma+aux;
+  end;
+  ActualizarSumatorioColumna(tablaC_Bis,columna,suma,dim);
+
+end;
+
+PROCEDURE InicializarTablaResultado(VAR tablaF:TTabla;VAR tablaC:TTabla;dim,rango,posDesactivables:integer);
 VAR
   i,j,cifraDesactivable,pos,aux,visible:integer;
 BEGIN
@@ -126,45 +142,48 @@ BEGIN
   pos:=0;aux:=0;
   FOR i:=MIN TO dim DO BEGIN
     FOR j:=MIN TO dim DO BEGIN
-       tablaF[i,j].visible:=RANDOM(rango)+1;
+      tablaF[i,j].visible:=RANDOM(rango)+1;
        tablaC[i,j].visible:=tablaF[i,j].visible;
        tablaF[i,j].activado:=TRUE;
        tablaC[i,j].activado:=TRUE;
-       //visible:=tabla[i,j].visible;
-       //aux:=aux+visible;
     END;
   end;
 
-  aux:=0;
+  aux:=0;i:=MIN;j:=MIN;
   REPEAT
   cifraDesactivable:=RANDOM(rango)+1;
-  FOR i:=MIN TO dim DO BEGIN
-    FOR j:=MIN TO dim DO BEGIN
-       IF(pos<=posDesactivables)AND(tablaF[i,j].visible=cifraDesactivable)AND(NOT verificarFilaNula(tablaF,i,dim))AND(NOT verificarColumnaNula(tablaC,j,dim))THEN BEGIN
-              //tabla[i,j].visible:=0;
+  WHILE(i<=dim)AND(pos<=posDesactivables)DO BEGIN
+
+    WHILE(j<=dim)DO BEGIN
+       IF(pos<=posDesactivables)AND(tablaF[i,j].visible=cifraDesactivable)THEN BEGIN
               tablaF[i,j].activado:=FALSE;
               tablaC[i,j].activado:=FALSE;
               pos:=pos+1;
        end
-       ELSE BEGIN
+       ELSE IF(tablaF[i,j].visible<>cifraDesactivable)THEN BEGIN
           IF(tablaF[i,j].activado=TRUE)THEN BEGIN
              visible:=tablaF[i,j].visible;
              aux:=aux+visible;
           end;
        end;
-    end;
-    ActualizarSumatorioFila(tablaF,i,aux,dim);
+       j:=j+1;
+       cifraDesactivable:=RANDOM(rango)+1;
+    END;{WHILE}
 
+    ActualizarSumatorioFila(tablaF,i,aux,dim);
     aux:=0;
-   // cifraDesactivable:=RANDOM(rango)+1;
+    cifraDesactivable:=RANDOM(rango)+1;
+    i:=i+1;j:=1;
   end;
-  until(pos>10);
+  i:=1;j:=1;
+  until(pos>posDesactivables);
 
 END;
 
 PROCEDURE ActualizarTablaColumnas(VAR tablaC:TTabla;dim:integer);
 VAR
   j,i,aux,visible:integer;
+
 BEGIN
 
   aux:=0;j:=1;
@@ -181,6 +200,7 @@ BEGIN
   END;{WHILE}
 
 END;
+
 
 PROCEDURE MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis:TTabla;dim:integer);
 VAR
@@ -255,41 +275,11 @@ BEGIN
   FOR i:=MIN TO dim DO BEGIN
     FOR j:=MIN TO dim  DO BEGIN
       tablaF_Bis[i,j].visible:=tablaF[i,j].visible;
-      //tablaF_Bis[i,j].sumable:=tablaF[i,j].sumable;
       tablaF_Bis[i,j].activado:=tablaF[i,j].activado;
       tablaC_Bis[i,j].visible:=tablaC[i,j].visible;
-      //tablaC_Bis[i,j].sumable:=tablaC[i,j].sumable;
       tablaC_Bis[i,j].activado:=tablaC[i,j].activado;
     end;
   end;
-
-end;
-
-PROCEDURE ActualizarFila(VAR tablaF_Bis:TTabla;fila,dim:integer);
-VAR
-  j,aux,suma:integer;
-BEGIN
-
-  suma:=0;
-  FOR j:=MIN TO dim DO BEGIN
-    aux:=tablaF_Bis[fila,j].visible;
-    suma:=suma+aux;
-  end;
-  ActualizarSumatorioFila(tablaF_Bis,fila,suma,dim);
-
-end;
-
-PROCEDURE ActualizarColumna(VAR tablaC_Bis:TTabla;columna,dim:integer);
-VAR
-  i,aux,suma:integer;
-BEGIN
-
-  suma:=0;
-  FOR i:=MIN TO dim DO BEGIN
-    aux:=tablaC_Bis[i,columna].visible;
-    suma:=suma+aux;
-  end;
-  ActualizarSumatorioColumna(tablaC_Bis,columna,suma,dim);
 
 end;
 
@@ -327,18 +317,6 @@ VAR
   i,j:integer;
 BEGIN
 
-  {aux:=TRUE;i:=MIN;j:=MIN;
-  WHILE(i<=dim)AND(aux=TRUE)DO BEGIN
-     REPEAT
-        IF(tablaF_Bis[i,j].sumable=tablaF[i,j].sumable)THEN
-           aux:=TRUE
-        ELSE IF(tablaF_Bis[i,j].sumable=tablaF[i,j].sumable)THEN
-           aux:=FALSE;
-        j:=j+1;
-     UNTIL(j>dim)OR(aux=FALSE);
-     i:=i+1;
-  end; }
-
   FOR i:=MIN TO dim DO BEGIN
     FOR j:=MIN TO dim DO BEGIN
        IF(tablaF_Bis[i,j].sumable=tablaF[i,j].sumable)THEN
@@ -369,8 +347,12 @@ FUNCTION ExistePartidaEnFichero(VAR fich:TFicheroPartidas;VAR partida:TArrayPart
 VAR
   partidaEnFichero:boolean;
   i:integer;
+  ruta:String[100];
 BEGIN
 
+WRITELN('escriba la ruta de su fichero .bin  o .dat');
+READLN(ruta);
+ASSIGN(fich,ruta);
 {$I-}
    RESET(fich);
 {$I+}
@@ -401,8 +383,12 @@ end;
 FUNCTION PosicionPartidaEnFichero(VAR fich:TFicheroPartidas;VAR partida:TArrayPartidas;VAR tope:integer):integer;
 VAR
   i:integer;
+  ruta:String[100];
 BEGIN
 
+WRITELN('escriba la ruta de su fichero .bin  o .dat');
+READLN(ruta);
+ ASSIGN(fich,ruta);
 {$I-}
    RESET(fich);
 {$I+}
@@ -454,12 +440,17 @@ end;
 PROCEDURE GuardarPartida(VAR fich:TFicheroPartidas;VAR partida:TArrayPartidas;VAR tope:integer;numMovimientos:integer;opcionPartida:char);
 VAR
   pos:longInt;
+  ruta:String[100];
 BEGIN
 
   WRITELN('Escriba su nombre para guardar la partida');
   READLN(partida[tope].nombreJugador);
   partida[tope].puntuacion:=numMovimientos;
   partida[tope].tipo:=opcionPartida;
+
+  WRITELN('escriba la ruta de su fichero .bin  o .dat');
+  READLN(ruta);
+  ASSIGN(fich,ruta);
 
   IF(NOT ExistePartidaEnFichero(fich,partida,tope))THEN BEGIN
      {$I-}
@@ -580,11 +571,23 @@ IF(JuegoFinalizado(tablaF_Bis,tablaF,tablaC_Bis,tablaC,dimension))THEN BEGIN
 END;
 
 end;
+PROCEDURE InicializarPartida(VAR tope:integer;VAR partida:TArrayPartidas;dimension,rango,posDesactivable:integer;opcionPartida:char);
+VAR
+  tablaF,tablaC,tablaF_Bis,tablaC_Bis:TTabla;
+BEGIN
+
+                InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
+                ActualizarTablaColumnas(tablaC,dimension);
+                DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
+                InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
+                MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
+                Sumatorio(tablaF,tablaC,dimension);
+                JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
+end;
 
 PROCEDURE Juego(VAR tope:integer;VAR partida:TArrayPartidas);
 VAR
   dimension,rango,posDesactivable:integer;
-  tablaF,tablaC,tablaF_Bis,tablaC_Bis:TTabla;
   opcionPartida:char;
 BEGIN
 
@@ -602,72 +605,31 @@ BEGIN
 
     CASE opcionPartida OF
        'A','B','C':BEGIN
-            rango:=9;
-            IF(opcionPartida='A')THEN BEGIN
-                dimension:=5; posDesactivable:=10;
-                InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
-                ActualizarTablaColumnas(tablaC,dimension);
-                DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
-                MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                Sumatorio(tablaF,tablaC,dimension);
-                JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
-            END;
-            IF(opcionPartida='B')THEN BEGIN
-                dimension:=6; posDesactivable:=12;
-                InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
-                ActualizarTablaColumnas(tablaC,dimension);
-                DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
-                MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                Sumatorio(tablaF,tablaC,dimension);
-                JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
-            END;
-            IF(opcionPartida='C')THEN BEGIN
+                rango:=9;
+                IF(opcionPartida='A')THEN BEGIN
+                        dimension:=5; posDesactivable:=10;
+                END;
+                IF(opcionPartida='B')THEN BEGIN
+                       dimension:=6; posDesactivable:=12;
+                END;
+                IF(opcionPartida='C')THEN BEGIN
                 dimension:=7; posDesactivable:=14;
-                InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
-                ActualizarTablaColumnas(tablaC,dimension);
-                DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
-                MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                Sumatorio(tablaF,tablaC,dimension);
-                JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
+                END;
             END;
-        END;
        'D','E','F':BEGIN
                rango:=19;
                IF(opcionPartida='D')THEN BEGIN
                    dimension:=5; posDesactivable:=10;
-                   InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
-                   ActualizarTablaColumnas(tablaC,dimension);
-                   DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                   InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
-                   MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                   Sumatorio(tablaF,tablaC,dimension);
-                   JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
                END;
                IF(opcionPartida='E')THEN BEGIN
                    dimension:=6; posDesactivable:=12;
-                   InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
-                   ActualizarTablaColumnas(tablaC,dimension);
-                   DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                   InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
-                   MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                   Sumatorio(tablaF,tablaC,dimension);
-                   JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
                END;
                IF(opcionPartida='F')THEN BEGIN
                    dimension:=7; posDesactivable:=14;
-                   InicializarTablaResultado(tablaF,tablaC,dimension,rango,posDesactivable);
-                   ActualizarTablaColumnas(tablaC,dimension);
-                   DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                   InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
-                   MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                   Sumatorio(tablaF,tablaC,dimension);
-                   JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
                END;
           END;
     end;{CASE}
+InicializarPartida(tope,partida,dimension,rango,posDesactivable,opcionPartida);
 
 END;
 
@@ -727,4 +689,5 @@ BEGIN
 
 READLN;
 END.
+                                                                        
         
